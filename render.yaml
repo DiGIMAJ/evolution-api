@@ -3,19 +3,19 @@ services:
   - type: web
     name: evolution-api
     env: docker
-    region: frankfurt  # Closest to Lagos for better speed (or oregon if you prefer)
-    plan: starter      # Upgrade later if needed
+    region: frankfurt  # Closest to Lagos (low latency), or change to oregon
+    plan: starter      # Or free for test, but starter no sleep
     image: evoapicloud/evolution-api:latest
     startCommand: npm run start:prod
     envVars:
       - key: GLOBAL_API_KEY
         sync: false
-        value: your-super-secret-global-key-here-423   # ← CHANGE THIS NOW!
+        value: your-super-secret-global-key-here   # ← CHANGE THIS TO STRONG ONE!
       - key: AUTHENTICATION_API_KEY
         sync: false
-        value: ${GLOBAL_API_KEY}   # Or make separate if you want
+        value: ${GLOBAL_API_KEY}
       - key: SERVER_URL
-        value: https://${{ evolution-api.RAILWAY_STATIC_URL }}  # Render auto-fills this later
+        value: https://${{ evolution-api.RAILWAY_STATIC_URL }}  # Render go auto-fill after deploy
       - key: SERVER_PORT
         value: 8080
       - key: DATABASE_ENABLED
@@ -25,7 +25,7 @@ services:
       - key: DATABASE_CONNECTION_URI
         fromDatabase:
           name: evolution-db
-          property: connectionString
+          property: connectionString   # This links auto to the DB below
       - key: DATABASE_SAVE_DATA_INSTANCE
         value: true
       - key: DATABASE_SAVE_DATA_NEW_MESSAGE
@@ -33,16 +33,19 @@ services:
       - key: LOG_LEVEL
         value: INFO,ERROR,WARN
       - key: TELEMETRY_ENABLED
-        value: false   # No send data to them
-      # Add more if you want (check .env.example in repo): e.g. CORS_ORIGIN=*
+        value: false
+      # Optional extras: 
+      # - key: CORS_ORIGIN
+      #   value: "*"
     disk:
       name: evolution-instances
       mountPath: /evolution/instances
-      sizeGB: 5   # Enough for sessions + media
+      sizeGB: 5   # For sessions + small media
 
-  - type: pgsql
-    name: evolution-db
+databases:
+  - name: evolution-db
+    plan: starter   # Or free (but free expire after 90 days or so)
     region: frankfurt
-    plan: starter   # Free-ish for small use
-    databaseName: evolution
-    user: evolution
+    databaseName: evolution   # Optional, Render go add suffix if needed
+    user: evolution_user      # Optional
+    ipAllowList: []           # Empty = only internal connections (secure)
