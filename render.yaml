@@ -1,0 +1,48 @@
+version: 1
+services:
+  - type: web
+    name: evolution-api
+    env: docker
+    region: frankfurt  # Closest to Lagos for better speed (or oregon if you prefer)
+    plan: starter      # Upgrade later if needed
+    image: evoapicloud/evolution-api:latest
+    startCommand: npm run start:prod
+    envVars:
+      - key: GLOBAL_API_KEY
+        sync: false
+        value: your-super-secret-global-key-here-423   # ← CHANGE THIS NOW!
+      - key: AUTHENTICATION_API_KEY
+        sync: false
+        value: ${GLOBAL_API_KEY}   # Or make separate if you want
+      - key: SERVER_URL
+        value: https://${{ evolution-api.RAILWAY_STATIC_URL }}  # Render auto-fills this later
+      - key: SERVER_PORT
+        value: 8080
+      - key: DATABASE_ENABLED
+        value: true
+      - key: DATABASE_PROVIDER
+        value: postgresql
+      - key: DATABASE_CONNECTION_URI
+        fromDatabase:
+          name: evolution-db
+          property: connectionString
+      - key: DATABASE_SAVE_DATA_INSTANCE
+        value: true
+      - key: DATABASE_SAVE_DATA_NEW_MESSAGE
+        value: true
+      - key: LOG_LEVEL
+        value: INFO,ERROR,WARN
+      - key: TELEMETRY_ENABLED
+        value: false   # No send data to them
+      # Add more if you want (check .env.example in repo): e.g. CORS_ORIGIN=*
+    disk:
+      name: evolution-instances
+      mountPath: /evolution/instances
+      sizeGB: 5   # Enough for sessions + media
+
+  - type: pgsql
+    name: evolution-db
+    region: frankfurt
+    plan: starter   # Free-ish for small use
+    databaseName: evolution
+    user: evolution
