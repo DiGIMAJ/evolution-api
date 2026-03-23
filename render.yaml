@@ -9,8 +9,6 @@ services:
     image:
       url: evoapicloud/evolution-api:latest
 
-    startCommand: npm run start:prod
-
     envVars:
       - key: GLOBAL_API_KEY
         value: your-super-secret-global-key-here
